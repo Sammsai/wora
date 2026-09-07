@@ -4,14 +4,55 @@ import fs from "fs";
 import { parseFile, selectCover } from "music-metadata";
 import path from "path";
 import crypto from "crypto";
-import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
+import { SqliteRemoteDatabase, drizzle } from "drizzle-orm/sqlite-proxy";
 import * as schema from "./schema";
 import { sqlite } from "./createDB";
 import { app, BrowserWindow } from "electron";
 
-export const db: BetterSQLite3Database<typeof schema> = drizzle(sqlite, {
-  schema,
-});
+export const db: SqliteRemoteDatabase<typeof schema> = drizzle(
+  async (sql, params, method) => {
+    const trimmed = sql.trim().toLowerCase();
+    if (
+      trimmed.startsWith("begin") ||
+      trimmed.startsWith("commit") ||
+      trimmed.startsWith("rollback") ||
+      trimmed.startsWith("savepoint") ||
+      trimmed.startsWith("release")
+    ) {
+      sqlite.exec(sql);
+      return { rows: [] };
+    }
+
+    const stmt = sqlite.prepare(sql);
+    if (method === "run") {
+      const res = stmt.run(...params);
+      return {
+        rows: [],
+        changes: res.changes,
+        lastInsertRowid: res.lastInsertRowid,
+      };
+    } else if (method === "get") {
+      const res = stmt.get(...params);
+      return { rows: res ? Object.values(res) : [] };
+    } else if (method === "values") {
+      if (typeof (stmt as any).setReturnArrays === "function") {
+        (stmt as any).setReturnArrays(true);
+        const res = stmt.all(...params);
+        return { rows: res as any[] };
+      }
+      const res = stmt.all(...params);
+      return {
+        rows: res.map((r) => Object.values(r as Record<string, unknown>)),
+      };
+    } else {
+      const res = stmt.all(...params);
+      return {
+        rows: res.map((r) => Object.values(r as Record<string, unknown>)),
+      };
+    }
+  },
+  { schema },
+);
 
 const APP_DATA = app.getPath("userData");
 const ART_DIR = path.join(APP_DATA, "utilities/uploads/covers");

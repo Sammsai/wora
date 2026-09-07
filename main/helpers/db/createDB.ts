@@ -1,8 +1,8 @@
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { app } from "electron";
 import path from "path";
 
-export const sqlite = new Database(
+export const sqlite = new DatabaseSync(
   path.join(app.getPath("userData"), "wora.db"),
 );
 
