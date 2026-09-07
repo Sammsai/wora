@@ -153,8 +153,8 @@ const initializeLibrary = async () => {
     settings.windowOpacity !== undefined &&
     settings.windowOpacity !== null
   ) {
-    const opacity = Math.max(0.3, Math.min(1.0, settings.windowOpacity / 100));
-    mainWindow.setOpacity(opacity);
+    // Keep window native opacity 1.0 to avoid Windows DWM DirectComposition colorkey issues
+    mainWindow.setOpacity(1.0);
   }
 
   mainWindow.on("maximize", () => {
@@ -429,24 +429,30 @@ ipcMain.handle("getSettings", async () => {
 
 ipcMain.handle("updateSettings", async (_, data: any) => {
   const settingsResult = await updateSettings(data);
+  settings = settingsResult;
   if (data?.windowOpacity !== undefined && mainWindow) {
     const val = Math.max(
-      0.3,
-      Math.min(1.0, data.windowOpacity > 1 ? data.windowOpacity / 100 : data.windowOpacity),
+      30,
+      Math.min(100, data.windowOpacity > 1 ? data.windowOpacity : Math.round(data.windowOpacity * 100)),
     );
-    mainWindow.setOpacity(val);
+    mainWindow.webContents.send("window-opacity-change", val);
   }
   mainWindow.webContents.send("confirmSettingsUpdate", settingsResult);
   return settingsResult;
 });
 
 ipcMain.handle("setWindowOpacity", async (_, opacity: number) => {
-  if (mainWindow && typeof opacity === "number") {
-    const val = Math.max(
-      0.3,
-      Math.min(1.0, opacity > 1 ? opacity / 100 : opacity),
+  if (typeof opacity === "number") {
+    const normalized = Math.max(
+      30,
+      Math.min(100, opacity > 1 ? opacity : Math.round(opacity * 100)),
     );
-    mainWindow.setOpacity(val);
+    if (settings) {
+      settings.windowOpacity = normalized;
+    }
+    if (mainWindow) {
+      mainWindow.webContents.send("window-opacity-change", normalized);
+    }
   }
   return true;
 });
@@ -489,8 +495,14 @@ ipcMain.handle("getActionsData", async () => {
   const isNotMac = process.platform !== "darwin";
   const appVersion = app.getVersion();
   const isMaximized = mainWindow ? mainWindow.isMaximized() : false;
+  const windowOpacity =
+    settings &&
+    settings.windowOpacity !== undefined &&
+    settings.windowOpacity !== null
+      ? settings.windowOpacity
+      : 100;
 
-  return { isNotMac, appVersion, isMaximized };
+  return { isNotMac, appVersion, isMaximized, windowOpacity };
 });
 
 ipcMain.handle("getArtistWithAlbums", async (_, artist: string) => {

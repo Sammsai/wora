@@ -18,6 +18,7 @@ export default function App({ Component, pageProps }) {
   const router = useRouter();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [windowOpacity, setWindowOpacity] = useState(100);
 
   const isSpecialLayout = SPECIAL_LAYOUTS.includes(router.pathname);
 
@@ -26,17 +27,58 @@ export default function App({ Component, pageProps }) {
       if (response?.isMaximized !== undefined) {
         setIsMaximized(response.isMaximized);
       }
+      if (
+        response?.windowOpacity !== undefined &&
+        response?.windowOpacity !== null
+      ) {
+        setWindowOpacity(response.windowOpacity);
+      }
     });
 
-    const unsubscribe = window.ipc.on(
+    const unsubscribeMaximized = window.ipc.on(
       "window-maximized-change",
       (maximized: boolean) => {
         setIsMaximized(maximized);
       },
     );
 
+    const unsubscribeOpacity = window.ipc.on(
+      "window-opacity-change",
+      (opacity: number) => {
+        setWindowOpacity(opacity);
+      },
+    );
+
+    const unsubscribeSettings = window.ipc.on(
+      "confirmSettingsUpdate",
+      (settings: any) => {
+        if (
+          settings?.windowOpacity !== undefined &&
+          settings?.windowOpacity !== null
+        ) {
+          setWindowOpacity(settings.windowOpacity);
+        }
+      },
+    );
+
+    const handleLocalOpacity = (e: CustomEvent<number>) => {
+      if (typeof e.detail === "number") {
+        setWindowOpacity(e.detail);
+      }
+    };
+    window.addEventListener(
+      "wora-opacity-change",
+      handleLocalOpacity as EventListener,
+    );
+
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubscribeMaximized) unsubscribeMaximized();
+      if (unsubscribeOpacity) unsubscribeOpacity();
+      if (unsubscribeSettings) unsubscribeSettings();
+      window.removeEventListener(
+        "wora-opacity-change",
+        handleLocalOpacity as EventListener,
+      );
     };
   }, []);
 
@@ -45,6 +87,14 @@ export default function App({ Component, pageProps }) {
       Promise.all([
         window.ipc
           .invoke("getSettings")
+          .then((settings) => {
+            if (
+              settings?.windowOpacity !== undefined &&
+              settings?.windowOpacity !== null
+            ) {
+              setWindowOpacity(settings.windowOpacity);
+            }
+          })
           .catch((err) => console.error("Error loading settings:", err)),
         window.ipc
           .invoke("getRandomLibraryItems")
@@ -53,19 +103,30 @@ export default function App({ Component, pageProps }) {
     }
   }, [isSpecialLayout, router.pathname]);
 
-  const mainContainerClasses = cn(
-    "relative h-dvh w-dvw overflow-hidden bg-white text-xs text-black antialiased select-none dark:bg-black dark:text-white transition-[border-radius]",
-    isMaximized
-      ? "rounded-none border-none"
-      : "rounded-2xl border border-black/10 dark:border-white/10",
+  const appWrapperClasses = cn(
+    "h-dvh w-dvw overflow-hidden box-border bg-transparent transition-[padding] duration-150 ease-out",
+    isMaximized ? "p-0" : "p-2.5",
   );
+
+  const mainContainerClasses = cn(
+    "relative h-full w-full overflow-hidden bg-white text-xs text-black antialiased select-none dark:bg-black dark:text-white transition-[border-radius,box-shadow] duration-150 ease-out",
+    isMaximized
+      ? "rounded-none border-none shadow-none"
+      : "rounded-[10px] border border-black/10 dark:border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.18),0_1px_4px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.65),0_1px_6px_rgba(0,0,0,0.45)]",
+  );
+
+  const opacityStyle = {
+    opacity: Math.max(0.3, Math.min(1.0, (windowOpacity ?? 100) / 100)),
+  };
 
   if (isSpecialLayout) {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <main className={mainContainerClasses}>
-          <Component {...pageProps} />
-        </main>
+        <div className={appWrapperClasses}>
+          <main className={mainContainerClasses} style={opacityStyle}>
+            <Component {...pageProps} />
+          </main>
+        </div>
       </ThemeProvider>
     );
   }
@@ -78,34 +139,36 @@ export default function App({ Component, pageProps }) {
       enableSystem
     >
       <PlayerProvider>
-        <main className={mainContainerClasses}>
-          <div className="h-full w-full">
-            <Actions />
-            <Toaster position="top-right" />
+        <div className={appWrapperClasses}>
+          <main className={mainContainerClasses} style={opacityStyle}>
+            <div className="h-full w-full">
+              <Actions />
+              <Toaster position="top-right" />
 
-            <div className="flex gap-8">
-              <div className="sticky top-0 z-50 h-dvh p-8 pt-12 pr-0">
-                <Navbar />
-              </div>
+              <div className="flex h-full gap-8">
+                <div className="sticky top-0 z-50 h-full p-8 pt-12 pr-0">
+                  <Navbar />
+                </div>
 
-              <div className="h-dvh grow p-8 pt-12 pl-0">
-                <div className="wora-transition relative flex h-full w-full flex-col">
-                  <ScrollArea
-                    ref={scrollAreaRef}
-                    className="h-full w-full mask-b-from-40%"
-                  >
-                    <ErrorBoundary>
-                      <Component {...pageProps} />
-                      <div className="h-[20vh] w-full" />
-                    </ErrorBoundary>
-                  </ScrollArea>
+                <div className="h-full grow p-8 pt-12 pl-0">
+                  <div className="wora-transition relative flex h-full w-full flex-col">
+                    <ScrollArea
+                      ref={scrollAreaRef}
+                      className="h-full w-full mask-b-from-40%"
+                    >
+                      <ErrorBoundary>
+                        <Component {...pageProps} />
+                        <div className="h-[20vh] w-full" />
+                      </ErrorBoundary>
+                    </ScrollArea>
 
-                  <Player />
+                    <Player />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </PlayerProvider>
     </ThemeProvider>
   );

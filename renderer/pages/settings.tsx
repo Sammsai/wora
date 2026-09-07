@@ -201,6 +201,9 @@ export default function Settings() {
 
   const handleOpacityChange = (value: number) => {
     setWindowOpacity(value);
+    window.dispatchEvent(
+      new CustomEvent("wora-opacity-change", { detail: value }),
+    );
     window.ipc.invoke("setWindowOpacity", value);
   };
 
