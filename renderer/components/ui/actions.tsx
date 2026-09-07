@@ -25,7 +25,7 @@ function Actions() {
   }, []);
 
   return (
-    <div className="drag absolute top-0 z-50 flex h-11 w-full items-center justify-end px-8 py-2.5">
+    <div className="drag absolute top-0 z-60 flex h-11 w-full items-center justify-end px-8 py-2.5">
       <div className="relative flex h-full w-full items-center justify-center">
         <div className="flex h-full items-center gap-2">
           <Image

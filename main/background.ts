@@ -132,8 +132,12 @@ const initializeLibrary = async () => {
   mainWindow = createWindow("main", {
     width: 1500,
     height: 900,
-    titleBarStyle: "hidden",
-    trafficLightPosition: { x: 20, y: 20 },
+    ...(process.platform === "darwin"
+      ? {
+          titleBarStyle: "hidden",
+          trafficLightPosition: { x: 20, y: 20 },
+        }
+      : {}),
     transparent: true,
     frame: false,
     icon: path.join(__dirname, "resources/icon.icns"),
