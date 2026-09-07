@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   check-version-change:
     runs-on: ubuntu-latest
@@ -15,21 +18,50 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Check Version Change
         id: check
         run: |
-          git diff HEAD^ HEAD --name-only | grep -q '^package.json$' || exit 0
-          old_version=$(git show HEAD^:package.json | jq -r '.version')
-          new_version=$(jq -r '.version' package.json)
-          if [ "$old_version" != "$new_version" ] && [ $(git diff HEAD^ HEAD --name-only | wc -l) -eq 1 ]; then
+          new_version=$(jq -r '.version // empty' package.json)
+          if [ -z "$new_version" ]; then
+            echo "Error: Cannot find version in package.json" >&2
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+          # 手动触发时，直接发布当前版本
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Triggered manually via workflow_dispatch. Releasing version $new_version"
             echo "version_changed=true" >> $GITHUB_OUTPUT
-            echo "new_version=$new_version" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 获取上一次状态中的旧版本号
+          old_version=""
+          before_sha="${{ github.event.before }}"
+          if [ -n "$before_sha" ] && [ "$before_sha" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$before_sha" 2>/dev/null; then
+            old_version=$(git show "$before_sha":package.json 2>/dev/null | jq -r '.version // empty' || echo "")
+          elif git rev-parse HEAD~1 >/dev/null 2>&1; then
+            old_version=$(git show HEAD~1:package.json 2>/dev/null | jq -r '.version // empty' || echo "")
+          fi
+
+          echo "Old version: '$old_version'"
+          echo "New version: '$new_version'"
+
+          # 只要新版本不为空且与旧版本不同，即触发发布
+          if [ -n "$new_version" ] && [ "$old_version" != "$new_version" ]; then
+            echo "Version changed from '$old_version' to '$new_version'"
+            echo "version_changed=true" >> $GITHUB_OUTPUT
           else
+            echo "No version change detected"
             echo "version_changed=false" >> $GITHUB_OUTPUT
           fi
 
   build:
+    needs: check-version-change
+    if: needs.check-version-change.outputs.version_changed == 'true'
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
@@ -75,4 +107,4 @@ jobs:
           prerelease: false
           files: ${{ steps.get_asset.outputs.asset_path }}
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
