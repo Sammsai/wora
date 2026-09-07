@@ -1,8 +1,8 @@
 import path from "path";
-import { Menu, Tray, app, dialog, ipcMain, shell } from "electron";
+import { Menu, Tray, app, dialog, ipcMain, shell, protocol, net } from "electron";
+import { fileURLToPath, pathToFileURL } from "url";
 import serve from "electron-serve";
 import { createWindow } from "./helpers";
-import { protocol } from "electron";
 import {
   addSongToPlaylist,
   addToFavourites,
@@ -48,7 +48,50 @@ logger.info(`wora starting up - ${new Date().toISOString()}`);
 logger.info(`Node environment: ${process.env.NODE_ENV}`);
 logger.info(`Electron version: ${process.versions.electron}`);
 logger.info(`Chrome version: ${process.versions.chrome}`);
-logger.info(`OS: ${process.platform} ${process.arch}`);
+// Register custom protocol schemes as privileged before app is ready
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "wora",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+      bypassCSP: true,
+    },
+  },
+]);
+
+function getFilePathFromWoraUrl(rawUrl: string): string {
+  try {
+    const normalizedUrl = rawUrl.replace(/\\/g, "/");
+    const parsed = new URL(normalizedUrl);
+
+    // On Windows, if host is a drive letter (e.g. wora://c/path/to/file or wora://C/path)
+    if (process.platform === "win32" && /^[a-zA-Z]$/.test(parsed.host)) {
+      const fileUrl = `file:///${parsed.host}:${parsed.pathname}${parsed.search}`;
+      return fileURLToPath(fileUrl);
+    }
+
+    // If host is empty (e.g. wora:///C:/path or wora:///home/...)
+    if (!parsed.host) {
+      const fileUrl = `file://${parsed.pathname}${parsed.search}`;
+      return fileURLToPath(fileUrl);
+    }
+
+    // Fallback for custom formats
+    const fileUrl = normalizedUrl.replace(/^wora:/, "file:");
+    return fileURLToPath(fileUrl);
+  } catch {
+    // Last-ditch manual decode fallback
+    let decoded = decodeURIComponent(rawUrl.replace(/^wora:\/\/?/, ""));
+    if (process.platform === "win32" && /^\/[a-zA-Z]:/.test(decoded)) {
+      decoded = decoded.slice(1);
+    }
+    return path.normalize(decoded);
+  }
+}
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -124,9 +167,19 @@ const initializeLibrary = async () => {
   // Initialize Last.fm IPC handlers
   initializeLastFmHandlers();
 
-  // @hiaaryan: Using Depreciated API [Seeking Not Supported with Net]
-  protocol.registerFileProtocol("wora", (request, callback) => {
-    callback({ path: decodeURIComponent(request.url.replace("wora://", "")) });
+  // Handle local resource requests (covers, audio, assets) via custom wora protocol
+  protocol.handle("wora", (request) => {
+    try {
+      const resolvedPath = getFilePathFromWoraUrl(request.url);
+      if (resolvedPath && fs.existsSync(resolvedPath)) {
+        return net.fetch(pathToFileURL(resolvedPath).toString());
+      }
+      logger.warn(`wora protocol file not found: ${request.url} -> ${resolvedPath}`);
+      return new Response("File not found", { status: 404 });
+    } catch (err) {
+      logger.error(`Error handling wora:// request (${request.url}):`, err);
+      return new Response("Internal server error", { status: 500 });
+    }
   });
 
   mainWindow = createWindow("main", {

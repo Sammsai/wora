@@ -725,9 +725,12 @@ export const Player = () => {
     // No song to play, exit early
     if (!song?.filePath) return;
 
+    const normalizedSongPath = song.filePath.replace(/\\/g, "/");
+    const audioSrc = `wora://${normalizedSongPath.startsWith("/") ? "" : "/"}${encodeURI(normalizedSongPath).replace(/#/g, "%23")}`;
+
     // Create new Howl instance
     const sound = new Howl({
-      src: [`wora://${encodeURIComponent(song.filePath)}`],
+      src: [audioSrc],
       format: [song.filePath.split(".").pop()],
       html5: true,
       autoplay: true,
