@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400..900&display=swap")
 layer(base);
+@import url("https://fonts.googleapis.com/css2?family=MuseoModerno:wght@400..900&display=swap")
+layer(base);
 
 @import "tailwindcss";
 @plugin 'tailwindcss-animate';
@@ -8,6 +10,7 @@ layer(base);
 
 @theme {
   --font-sans: Maven Pro, ui-sans-serif, system-ui, sans-serif;
+  --font-title: MuseoModerno, cursive, sans-serif;
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
@@ -49,6 +52,10 @@ layer(base);
 
 .wora-border {
   @apply border border-black/5 dark:border-white/10;
+}
+
+.font-title {
+  font-family: "MuseoModerno", cursive, sans-serif;
 }
 
 .wora-transition {

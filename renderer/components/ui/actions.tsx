@@ -57,7 +57,7 @@ function Actions() {
             width={16}
             height={16}
           />
-          wora
+          <span className="font-title text-base font-bold">wora</span>
         </div>
         <div className="no-drag absolute -right-2 top-0 flex h-full items-center gap-2.5">
           {data && data.isNotMac && (
