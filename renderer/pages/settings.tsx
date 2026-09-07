@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
+  IconAdjustmentsHorizontal,
   IconArrowRight,
   IconBrandLastfm,
   IconCheck,
@@ -64,6 +65,7 @@ type Settings = {
   lastFmSessionKey?: string;
   enableLastFm?: boolean;
   scrobbleThreshold?: number;
+  windowOpacity?: number;
 };
 
 type LastFmSettings = {
@@ -75,6 +77,7 @@ type LastFmSettings = {
 
 export default function Settings() {
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [windowOpacity, setWindowOpacity] = useState(100);
   const [loading, setLoading] = useState(false);
   const [lastFmLoading, setLastFmLoading] = useState(false);
   const [lastFmSettings, setLastFmSettings] = useState<LastFmSettings>({
@@ -96,6 +99,12 @@ export default function Settings() {
   useEffect(() => {
     window.ipc.invoke("getSettings").then((response) => {
       setSettings(response);
+      if (
+        response?.windowOpacity !== undefined &&
+        response?.windowOpacity !== null
+      ) {
+        setWindowOpacity(response.windowOpacity);
+      }
       setPreviewUrl(
         response?.profilePicture
           ? `wora://${response.profilePicture}`
@@ -178,6 +187,7 @@ export default function Settings() {
     const updatedData = {
       name: data.name,
       profilePicture: profilePicturePath,
+      windowOpacity: windowOpacity,
     };
 
     await window.ipc.invoke("updateSettings", updatedData).then((response) => {
@@ -187,6 +197,21 @@ export default function Settings() {
         toast.success("Your settings are updated.");
       }
     });
+  };
+
+  const handleOpacityChange = (value: number) => {
+    setWindowOpacity(value);
+    window.ipc.invoke("setWindowOpacity", value);
+  };
+
+  const handleOpacityCommit = async (value: number) => {
+    try {
+      await window.ipc.invoke("updateSettings", { windowOpacity: value });
+      toast.success("Window opacity saved.");
+    } catch (error) {
+      console.error("Error saving window opacity:", error);
+      toast.error("Failed to save window opacity.");
+    }
   };
 
   const connectToLastFm = async (data: z.infer<typeof lastFmFormSchema>) => {
@@ -562,6 +587,37 @@ export default function Settings() {
                       <IconArrowRight stroke={2} className="h-3.5 w-3.5" />
                     )}
                   </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Window Settings Section */}
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <IconAdjustmentsHorizontal stroke={2} size={20} className="text-blue-500" />
+              <h2 className="text-lg font-medium">Window Settings</h2>
+            </div>
+
+            <div className="wora-border rounded-2xl p-6">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label className="text-xs font-medium">
+                      Window Opacity: {windowOpacity}%
+                    </Label>
+                  </div>
+                  <Slider
+                    value={[windowOpacity]}
+                    min={30}
+                    max={100}
+                    step={1}
+                    onValueChange={(vals) => handleOpacityChange(vals[0])}
+                    onValueCommit={(vals) => handleOpacityCommit(vals[0])}
+                  />
+                  <p className="text-xs opacity-50">
+                    Adjust the opacity of the application window (30% - 100%)
+                  </p>
                 </div>
               </div>
             </div>

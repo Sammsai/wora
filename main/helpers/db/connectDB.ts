@@ -154,7 +154,11 @@ export const getSettings = async () => {
 export const updateSettings = async (data: any) => {
   const currentSettings = await db.select().from(settings);
 
-  if (currentSettings[0].profilePicture) {
+  if (
+    data.profilePicture &&
+    currentSettings[0]?.profilePicture &&
+    data.profilePicture !== currentSettings[0].profilePicture
+  ) {
     try {
       fs.unlinkSync(currentSettings[0].profilePicture);
     } catch (error) {
@@ -162,10 +166,14 @@ export const updateSettings = async (data: any) => {
     }
   }
 
-  await db.update(settings).set({
-    name: data.name,
-    profilePicture: data.profilePicture,
-  });
+  const updateData: any = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.profilePicture !== undefined) updateData.profilePicture = data.profilePicture;
+  if (data.windowOpacity !== undefined) updateData.windowOpacity = data.windowOpacity;
+
+  if (Object.keys(updateData).length > 0) {
+    await db.update(settings).set(updateData);
+  }
 
   return true;
 };
@@ -925,6 +933,11 @@ export const migrateDatabase = async () => {
     // Check for scrobbleThreshold column
     if (!columnNames.includes("scrobbleThreshold")) {
       missingColumns.push("scrobbleThreshold INTEGER DEFAULT 50");
+    }
+
+    // Check for windowOpacity column
+    if (!columnNames.includes("windowOpacity")) {
+      missingColumns.push("windowOpacity INTEGER DEFAULT 100");
     }
 
     // Add missing columns if any

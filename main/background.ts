@@ -138,6 +138,7 @@ const initializeLibrary = async () => {
           trafficLightPosition: { x: 20, y: 20 },
         }
       : {}),
+    backgroundColor: "#00000000",
     transparent: true,
     frame: false,
     icon: path.join(__dirname, "resources/icon.icns"),
@@ -145,6 +146,23 @@ const initializeLibrary = async () => {
       preload: path.join(__dirname, "preload.js"),
       backgroundThrottling: false,
     },
+  });
+
+  if (
+    settings &&
+    settings.windowOpacity !== undefined &&
+    settings.windowOpacity !== null
+  ) {
+    const opacity = Math.max(0.3, Math.min(1.0, settings.windowOpacity / 100));
+    mainWindow.setOpacity(opacity);
+  }
+
+  mainWindow.on("maximize", () => {
+    mainWindow.webContents.send("window-maximized-change", true);
+  });
+
+  mainWindow.on("unmaximize", () => {
+    mainWindow.webContents.send("window-maximized-change", false);
   });
 
   ipcMain.on("quitApp", async () => {
@@ -410,9 +428,27 @@ ipcMain.handle("getSettings", async () => {
 });
 
 ipcMain.handle("updateSettings", async (_, data: any) => {
-  const settings = await updateSettings(data);
-  mainWindow.webContents.send("confirmSettingsUpdate", settings);
-  return settings;
+  const settingsResult = await updateSettings(data);
+  if (data?.windowOpacity !== undefined && mainWindow) {
+    const val = Math.max(
+      0.3,
+      Math.min(1.0, data.windowOpacity > 1 ? data.windowOpacity / 100 : data.windowOpacity),
+    );
+    mainWindow.setOpacity(val);
+  }
+  mainWindow.webContents.send("confirmSettingsUpdate", settingsResult);
+  return settingsResult;
+});
+
+ipcMain.handle("setWindowOpacity", async (_, opacity: number) => {
+  if (mainWindow && typeof opacity === "number") {
+    const val = Math.max(
+      0.3,
+      Math.min(1.0, opacity > 1 ? opacity / 100 : opacity),
+    );
+    mainWindow.setOpacity(val);
+  }
+  return true;
 });
 
 ipcMain.handle("uploadProfilePicture", async (_, file) => {
@@ -452,8 +488,9 @@ ipcMain.handle("uploadPlaylistCover", async (_, file) => {
 ipcMain.handle("getActionsData", async () => {
   const isNotMac = process.platform !== "darwin";
   const appVersion = app.getVersion();
+  const isMaximized = mainWindow ? mainWindow.isMaximized() : false;
 
-  return { isNotMac, appVersion };
+  return { isNotMac, appVersion, isMaximized };
 });
 
 ipcMain.handle("getArtistWithAlbums", async (_, artist: string) => {

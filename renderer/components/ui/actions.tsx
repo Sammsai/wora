@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 type Data = {
   appVersion: string;
   isNotMac: boolean;
+  isMaximized?: boolean;
 };
 
 function Actions() {
@@ -21,7 +22,21 @@ function Actions() {
   useEffect(() => {
     window.ipc.invoke("getActionsData").then((response) => {
       setData(response);
+      if (response?.isMaximized !== undefined) {
+        setIsMaximized(response.isMaximized);
+      }
     });
+
+    const unsubscribe = window.ipc.on(
+      "window-maximized-change",
+      (maximized: boolean) => {
+        setIsMaximized(maximized);
+      },
+    );
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   return (
@@ -56,11 +71,14 @@ function Actions() {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setIsMaximized(!isMaximized);
                   window.ipc.send("maximizeWindow", !isMaximized);
                 }}
               >
-                <IconSquare size={11} stroke={2} />
+                {isMaximized ? (
+                  <IconBox size={11} stroke={2} />
+                ) : (
+                  <IconSquare size={11} stroke={2} />
+                )}
               </Button>
               <Button
                 variant="ghost"

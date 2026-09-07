@@ -12,7 +12,8 @@ export const initDatabase = async () => {
         id INTEGER PRIMARY KEY,
         name TEXT,
         profilePicture TEXT,
-        musicFolder TEXT
+        musicFolder TEXT,
+        windowOpacity INTEGER DEFAULT 100
       );
       CREATE TABLE IF NOT EXISTS albums (
         id INTEGER PRIMARY KEY,

@@ -7,8 +7,9 @@ import { useRouter } from "next/router";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/themeProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { cn } from "@/lib/utils";
 // import PageTransition from "@/components/PageTransition";  // Optional: Re-enable for transitions
 
 const SPECIAL_LAYOUTS = ["/setup"];
@@ -16,8 +17,28 @@ const SPECIAL_LAYOUTS = ["/setup"];
 export default function App({ Component, pageProps }) {
   const router = useRouter();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
 
   const isSpecialLayout = SPECIAL_LAYOUTS.includes(router.pathname);
+
+  useEffect(() => {
+    window.ipc.invoke("getActionsData").then((response) => {
+      if (response?.isMaximized !== undefined) {
+        setIsMaximized(response.isMaximized);
+      }
+    });
+
+    const unsubscribe = window.ipc.on(
+      "window-maximized-change",
+      (maximized: boolean) => {
+        setIsMaximized(maximized);
+      },
+    );
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSpecialLayout) {
@@ -32,10 +53,17 @@ export default function App({ Component, pageProps }) {
     }
   }, [isSpecialLayout, router.pathname]);
 
+  const mainContainerClasses = cn(
+    "relative h-dvh w-dvw overflow-hidden bg-white text-xs text-black antialiased select-none dark:bg-black dark:text-white transition-[border-radius]",
+    isMaximized
+      ? "rounded-none border-none"
+      : "rounded-2xl border border-black/10 dark:border-white/10",
+  );
+
   if (isSpecialLayout) {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <main className="bg-white text-xs text-black antialiased select-none dark:bg-black dark:text-white">
+        <main className={mainContainerClasses}>
           <Component {...pageProps} />
         </main>
       </ThemeProvider>
@@ -50,8 +78,8 @@ export default function App({ Component, pageProps }) {
       enableSystem
     >
       <PlayerProvider>
-        <main className="bg-white text-xs text-black antialiased select-none dark:bg-black dark:text-white">
-          <div className="h-dvh w-dvw">
+        <main className={mainContainerClasses}>
+          <div className="h-full w-full">
             <Actions />
             <Toaster position="top-right" />
 

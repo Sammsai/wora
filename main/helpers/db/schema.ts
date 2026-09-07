@@ -10,6 +10,7 @@ export const settings = sqliteTable("settings", {
   lastFmSessionKey: text("lastFmSessionKey"),
   enableLastFm: integer("enableLastFm", { mode: "boolean" }).default(false),
   scrobbleThreshold: integer("scrobbleThreshold").default(50),
+  windowOpacity: integer("windowOpacity").default(100),
 });
 
 export const albums = sqliteTable("albums", {
