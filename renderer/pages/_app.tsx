@@ -103,30 +103,17 @@ export default function App({ Component, pageProps }) {
     }
   }, [isSpecialLayout, router.pathname]);
 
-  const appWrapperClasses = cn(
-    "h-dvh w-dvw overflow-hidden box-border bg-transparent transition-[padding] duration-150 ease-out",
-    isMaximized ? "p-0" : "p-2.5",
-  );
-
   const mainContainerClasses = cn(
-    "relative h-full w-full overflow-hidden bg-white text-xs text-black antialiased select-none dark:bg-black dark:text-white transition-[border-radius,box-shadow] duration-150 ease-out",
-    isMaximized
-      ? "rounded-none border-none shadow-none"
-      : "rounded-[10px] border border-black/10 dark:border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.18),0_1px_4px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.65),0_1px_6px_rgba(0,0,0,0.45)]",
+    "relative h-dvh w-dvw overflow-hidden bg-white text-xs text-black antialiased select-none dark:bg-black dark:text-white",
+    isMaximized ? "rounded-none" : "rounded-lg",
   );
-
-  const opacityStyle = {
-    opacity: Math.max(0.3, Math.min(1.0, (windowOpacity ?? 100) / 100)),
-  };
 
   if (isSpecialLayout) {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <div className={appWrapperClasses}>
-          <main className={mainContainerClasses} style={opacityStyle}>
-            <Component {...pageProps} />
-          </main>
-        </div>
+        <main className={mainContainerClasses}>
+          <Component {...pageProps} />
+        </main>
       </ThemeProvider>
     );
   }
@@ -139,20 +126,19 @@ export default function App({ Component, pageProps }) {
       enableSystem
     >
       <PlayerProvider>
-        <div className={appWrapperClasses}>
-          <main className={mainContainerClasses} style={opacityStyle}>
-            <div className="h-full w-full">
-              <Actions />
-              <Toaster position="top-right" />
+        <main className={mainContainerClasses}>
+          <div className="h-full w-full">
+            <Actions />
+            <Toaster position="top-right" />
 
-              <div className="flex h-full gap-8">
-                <div className="sticky top-0 z-50 h-full p-8 pt-12 pr-0">
-                  <Navbar />
-                </div>
+            <div className="flex h-full gap-8">
+              <div className="sticky top-0 z-50 h-full p-8 pt-12 pr-0">
+                <Navbar />
+              </div>
 
-                <div className="h-full grow p-8 pt-12 pl-0">
-                  <div className="wora-transition relative flex h-full w-full flex-col">
-                    <ScrollArea
+              <div className="h-full grow p-8 pt-12 pl-0">
+                <div className="wora-transition relative flex h-full w-full flex-col">
+                  <ScrollArea
                       ref={scrollAreaRef}
                       className="h-full w-full mask-b-from-40%"
                     >
@@ -168,7 +154,6 @@ export default function App({ Component, pageProps }) {
               </div>
             </div>
           </main>
-        </div>
       </PlayerProvider>
     </ThemeProvider>
   );

@@ -1,5 +1,5 @@
 appId: com.wora.player
-productName: Wora
+productName: wora
 copyright: Copyright © 2024 Aaryan Kapoor
 directories:
   output: dist
@@ -10,7 +10,7 @@ files:
       - package.json
       - app
 publish: null
-artifactName: Wora [v${version}].${ext}
+artifactName: wora [v${version}].${ext}
 linux:
   target:
     - AppImage

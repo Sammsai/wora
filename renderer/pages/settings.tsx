@@ -507,7 +507,7 @@ export default function Settings() {
                       <p className="text-sm font-medium">
                         {settings && settings.name
                           ? settings.name
-                          : "Wora User"}
+                          : "wora User"}
                       </p>
                       <p className="opacity-50">A great listener of music.</p>
                     </div>

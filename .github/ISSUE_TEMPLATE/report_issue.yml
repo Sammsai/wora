@@ -18,8 +18,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Wora Version
-      description: Which version of Wora did this bug happen on?
+      label: wora Version
+      description: Which version of wora did this bug happen on?
       placeholder: Ex. 0.3.2
     validations:
       required: true

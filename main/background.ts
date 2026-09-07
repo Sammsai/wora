@@ -44,7 +44,7 @@ electronLog.transports.file.level = "info";
 const logger = electronLog.default;
 
 // Log application startup
-logger.info(`Wora starting up - ${new Date().toISOString()}`);
+logger.info(`wora starting up - ${new Date().toISOString()}`);
 logger.info(`Node environment: ${process.env.NODE_ENV}`);
 logger.info(`Electron version: ${process.versions.electron}`);
 logger.info(`Chrome version: ${process.versions.chrome}`);
@@ -138,9 +138,8 @@ const initializeLibrary = async () => {
           trafficLightPosition: { x: 20, y: 20 },
         }
       : {}),
-    backgroundColor: "#00000000",
-    transparent: true,
     frame: false,
+    hasShadow: true,
     icon: path.join(__dirname, "resources/icon.icns"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -153,8 +152,8 @@ const initializeLibrary = async () => {
     settings.windowOpacity !== undefined &&
     settings.windowOpacity !== null
   ) {
-    // Keep window native opacity 1.0 to avoid Windows DWM DirectComposition colorkey issues
-    mainWindow.setOpacity(1.0);
+    const opacity = Math.max(0.3, Math.min(1.0, settings.windowOpacity / 100));
+    mainWindow.setOpacity(opacity);
   }
 
   mainWindow.on("maximize", () => {
@@ -266,7 +265,7 @@ ipcMain.handle("scanLibrary", async () => {
   return diag;
 });
 
-// @hiaaryan: Set Tray for Wora
+// @hiaaryan: Set Tray for wora
 let tray = null;
 app.whenReady().then(() => {
   const trayIconPath = !isProd
@@ -298,7 +297,7 @@ app.whenReady().then(() => {
       accelerator: "Cmd+Q",
     },
   ]);
-  tray.setToolTip("Wora");
+  tray.setToolTip("wora");
   tray.setContextMenu(contextMenu);
 });
 
@@ -435,6 +434,7 @@ ipcMain.handle("updateSettings", async (_, data: any) => {
       30,
       Math.min(100, data.windowOpacity > 1 ? data.windowOpacity : Math.round(data.windowOpacity * 100)),
     );
+    mainWindow.setOpacity(val / 100);
     mainWindow.webContents.send("window-opacity-change", val);
   }
   mainWindow.webContents.send("confirmSettingsUpdate", settingsResult);
@@ -451,6 +451,7 @@ ipcMain.handle("setWindowOpacity", async (_, opacity: number) => {
       settings.windowOpacity = normalized;
     }
     if (mainWindow) {
+      mainWindow.setOpacity(normalized / 100);
       mainWindow.webContents.send("window-opacity-change", normalized);
     }
   }

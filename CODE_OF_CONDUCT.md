@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/playwora/wora/blob/main/renderer/public/github/Header.png?raw=true" alt="Wora Logo" />
+  <img src="https://github.com/playwora/wora/blob/main/renderer/public/github/Header.png?raw=true" alt="wora Logo" />
 </p>
 
 <p align="center">

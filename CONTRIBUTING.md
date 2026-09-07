@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/playwora/wora/blob/main/renderer/public/github/Header.png?raw=true" alt="Wora Logo" />
+  <img src="https://github.com/playwora/wora/blob/main/renderer/public/github/Header.png?raw=true" alt="wora Logo" />
 </p>
 
 <p align="center">
@@ -12,13 +12,13 @@
   <a href="https://github.com/playwora/wora/watchers"><img src="https://img.shields.io/github/watchers/playwora/wora?style=flat&watchers" alt="GitHub Watchers" /></a>
 </p>
 
-## 🤝 Contributing to Wora
+## 🤝 Contributing to wora
 
-Thank you for considering contributing to **Wora**! 🎉 We welcome contributions from everyone. We have prepared some guidelines for you to get started ✅
+Thank you for considering contributing to **wora**! 🎉 We welcome contributions from everyone. We have prepared some guidelines for you to get started ✅
 
 ## 🛠️ Project Setup
 
-Wora is an Electron app built with Next.js and TailwindCSS, using BetterSQLite3 with Drizzle ORM for database management. Here's an overview of the database schema:
+wora is an Electron app built with Next.js and TailwindCSS, using BetterSQLite3 with Drizzle ORM for database management. Here's an overview of the database schema:
 
 ```mermaid
 erDiagram

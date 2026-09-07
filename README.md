@@ -2,7 +2,7 @@
 > There is a migrated version which is being built with tauri (rust 🦀). During this time contributions to this repo are severely limited and only critical fixes would be merged. Please join our [Discord](https://discord.gg/CrAbAYMGCe) to follow updates on the new version.
 
 <p align="center">
-  <img src="https://github.com/playwora/wora/blob/main/renderer/public/github/Header.png?raw=true" alt="Wora Logo" />
+  <img src="https://github.com/playwora/wora/blob/main/renderer/public/github/Header.png?raw=true" alt="wora Logo" />
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 
 ## ⭐️ Description
 
-**Wora** is a beautiful player for audiophiles. An open-source lossless music player app that lets you organize and play your favorite tracks seamlessly. With Wora, you can:
+**wora** is a beautiful player for audiophiles. An open-source lossless music player app that lets you organize and play your favorite tracks seamlessly. With wora, you can:
 
 - Create and manage playlists 🎉
 - Stream FLACs, WAVs apart from regular music extensions 🎧

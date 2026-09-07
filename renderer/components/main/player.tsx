@@ -849,7 +849,7 @@ export const Player = () => {
           // Set application name for Windows Media Controller
           if ("mediaSession" in navigator) {
             // @ts-ignore - applicationName is not in the official type definitions but works in Windows
-            navigator.mediaSession.metadata.applicationName = "Wora";
+            navigator.mediaSession.metadata.applicationName = "wora";
           }
 
           navigator.mediaSession.setActionHandler("play", handlePlayPause);
