@@ -3,10 +3,11 @@ import { albums, songs, settings, playlistSongs, playlists } from "./schema";
 import fs from "fs";
 import { parseFile, selectCover } from "music-metadata";
 import path from "path";
+import crypto from "crypto";
 import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 import { sqlite } from "./createDB";
-import { app } from "electron";
+import { app, BrowserWindow } from "electron";
 
 export const db: BetterSQLite3Database<typeof schema> = drizzle(sqlite, {
   schema,
@@ -788,7 +789,6 @@ async function processAudioFile(file: string, albumCache: Map<string, any>) {
 async function processAlbumArt(imagePath: string): Promise<string> {
   try {
     // Use a shorter hash method for faster processing
-    const crypto = require("crypto");
     const imageExt = path.extname(imagePath).slice(1);
 
     // Generate hash from filename and modified time instead of reading the whole file
@@ -835,7 +835,6 @@ async function processEmbeddedArt(cover: any): Promise<string> {
     const sampleSize = Math.min(cover.data.length, 4096); // Sample first 4KB
     const sampleBuffer = cover.data.slice(0, sampleSize);
 
-    const crypto = require("crypto");
     const hash = crypto.createHash("md5").update(sampleBuffer).digest("hex");
 
     const format = cover.format ? cover.format.split("/")[1] || "jpg" : "jpg";
@@ -968,7 +967,6 @@ export const migrateDatabase = async () => {
 function sendToRenderer(channel: string, data: any) {
   try {
     // Check if we have access to the webContents
-    const { BrowserWindow } = require("electron");
     const win = BrowserWindow.getAllWindows()[0];
     if (win && win.webContents) {
       win.webContents.send(channel, data);

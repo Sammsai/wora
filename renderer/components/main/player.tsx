@@ -948,7 +948,7 @@ export const Player = () => {
         )}
       </div>
 
-      <div className="!absolute top-0 right-0 w-96">
+      <div className="absolute! top-0 right-0 w-96">
         {showQueue && <QueuePanel queue={queue} history={history} currentIndex={currentIndex} onSongSelect={handleSongSelect} />}
       </div>
 

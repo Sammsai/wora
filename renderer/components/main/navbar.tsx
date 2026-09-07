@@ -26,7 +26,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -295,7 +295,7 @@ const Navbar = () => {
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    className={isActive(link.href) && "opacity-100"}
+                    className={isActive(link.href) ? "opacity-100" : ""}
                   >
                     <Link
                       href={link.href}
@@ -345,7 +345,7 @@ const Navbar = () => {
           />
           <CommandList>
             {loading && (
-              <div className="flex h-[325px] w-full items-center justify-center">
+              <div className="flex h-81.25 w-full items-center justify-center">
                 <Spinner className="h-6 w-6" />
               </div>
             )}
@@ -370,7 +370,7 @@ const Navbar = () => {
                         </div>
                       )}
                       {item.type === "Artist" && (
-                        <div className="dark:bg.white/10 flex h-12 w-12 items-center justify-center rounded-lg bg-black/10">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-black/10 dark:bg-white/10">
                           <IconUser stroke={1.5} size={24} />
                         </div>
                       )}
@@ -392,8 +392,8 @@ const Navbar = () => {
                 ))}
               </CommandGroup>
             ) : (
-              <div className="flex h-[325px] w-full items-center justify-center text-xs">
-                <div className="dark:bg.white/10 ml-2 rounded-lg bg-black/5 px-1.5 py-1 shadow-xs">
+              <div className="flex h-81.25 w-full items-center justify-center text-xs">
+                <div className="ml-2 rounded-lg bg-black/5 px-1.5 py-1 shadow-xs dark:bg-white/10">
                   ⌘ / Ctrl + F
                 </div>
               </div>
